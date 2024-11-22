@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>عد تنازلي</title>
+    <link id="favicon" rel="icon" href="https://via.placeholder.com/16x16/ff0000/000000?text=00:00" />
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f8ff;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        #countdown {
+            font-size: 3rem;
+            margin-top: 20px;
+            animation: countdownEnd 2s ease-in-out;
+        }
+        @keyframes countdownEnd {
+            0% { color: red; }
+            100% { color: green; }
+        }
+        .social-icons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .social-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding: 5px;
+            transition: transform 0.3s ease;
+        }
+        .social-icon:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <h1>العد التنازلي</h1>
+    <div id="countdown">00:00:00:00</div>
+    <input type="datetime-local" id="countdownTime" />
+    <button onclick="setCustomTime()">تعيين الوقت</button>
+    <br>
+    <button onclick="goFullscreen()">ملء الشاشة</button>
+    <br>
+    <button onclick="cancelCountdown()">إلغاء العد التنازلي</button>
+    <br>
+    
+    <!-- أزرار المشاركة بأيقونات التطبيقات -->
+    <div class="social-icons">
+        <a href="https://www.facebook.com/sharer/sharer.php?u=www.yourwebsite.com" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt="Facebook" class="social-icon" />
+        </a>
+        <a href="https://wa.me/?text=العد%20التنازلي%20الخاص%20بي%20هو%20www.yourwebsite.com" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" class="social-icon" />
+        </a>
+        <a href="fb-messenger://share?link=www.yourwebsite.com" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/Facebook_Messenger_2018_logo.svg" alt="Messenger" class="social-icon" />
+        </a>
+        <a href="https://twitter.com/intent/tweet?text=العد%20التنازلي%20الخاص%20بي%20هو%20www.yourwebsite.com" target="_blank">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/6/60/Twitter_Logo_2012.svg" alt="Twitter" class="social-icon" />
+        </a>
+    </div>
+    
+    <br>
+    <audio id="endSound" src="path_to_sound_file.mp3" preload="auto"></audio>
+
+    <script>
+        // التحقق من حالة الإذن باستخدام localStorage
+        if (localStorage.getItem("notificationPermission") !== "granted" && Notification.permission === "default") {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === "granted") {
+                    localStorage.setItem("notificationPermission", "granted");
+                }
+            });
+        }
+
+        // ضبط الوقت المحدد من قبل المستخدم
+        let endTime = new Date("2024-12-31T23:59:59").getTime();
+
+        function setCustomTime() {
+            const customTime = document.getElementById('countdownTime').value;
+            if (customTime) {
+                endTime = new Date(customTime).getTime();
+                updateCountdown();
+            }
+        }
+
+        function goFullscreen() {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
+        function cancelCountdown() {
+            clearInterval(countdownInterval);
+            document.getElementById("countdown").textContent = "تم إلغاء العد التنازلي!";
+        }
+
+        function updateFavicon(hours, minutes, seconds) {
+            const favicon = document.querySelector('#favicon');
+            favicon.href = `https://via.placeholder.com/16x16/ff0000/000000?text=${hours}:${minutes}:${seconds}`;
+        }
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const timeLeft = endTime - now;
+
+            if (timeLeft > 0) {
+                const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                document.getElementById("countdown").textContent = 
+                    `${days} أيام : ${hours.toString().padStart(2, "0")} : ${minutes.toString().padStart(2, "0")} : ${seconds.toString().padStart(2, "0")}`;
+                updateFavicon(hours, minutes, seconds);
+            } else {
+                document.getElementById("countdown").textContent = "انتهى الوقت!";
+                document.getElementById("endSound").play();
+
+                // إرسال إشعار إذا تم منح الإذن
+                if (localStorage.getItem("notificationPermission") === "granted" && Notification.permission === "granted") {
+                    new Notification("الوقت انتهى!", {
+                        body: "لقد وصل العد التنازلي إلى الصفر، حان وقتك الآن!",
+                        icon: "https://upload.wikimedia.org/wikipedia/commons/5/51/Google_Chrome_icon_%282013-2019%29.png"
+                    });
+                }
+            }
+        }
+
+        // تحديث العد التنازلي كل ثانية
+        setInterval(updateCountdown, 1000);
+        updateCountdown(); // استدعاء أولي لتجنب التأخير
+    </script>
+</body>
+</html>
